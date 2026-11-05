@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>習慣契約書メーカー</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  *:focus-visible { outline: 2px solid #ec4899; outline-offset: 2px; }
+  @media print {
+    body { background: white !important; color: black !important; }
+    .no-print { display: none !important; }
+    .print-contract { background: white !important; color: black !important; border: 2px solid #333 !important; }
+    .print-contract * { color: black !important; }
+  }
+</style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+<div class="max-w-3xl mx-auto px-4 py-8">
+  <h1 class="text-2xl font-bold text-pink-400 mb-1 no-print">習慣契約書メーカー</h1>
+  <p class="text-gray-400 text-sm mb-6 no-print">自分との習慣契約書を作成し印刷・進捗追跡</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Form -->
+    <div class="no-print space-y-4">
+      <div class="bg-gray-900 rounded-xl p-4 space-y-3">
+        <h2 class="text-sm font-semibold text-pink-400">契約内容を入力</h2>
+        <div class="mb-2">
+          <label class="block text-xs text-gray-400 mb-1">習慣を選択または新規作成</label>
+          <select id="habitSelect" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-pink-500">
+            <option value="__new__">＋ 新規習慣</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1" for="habitName">習慣名</label>
+          <input id="habitName" type="text" placeholder="例: 朝ランニング"
+            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-pink-500">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1" for="habitAction">具体的アクション</label>
+          <input id="habitAction" type="text" placeholder="例: 毎朝6時に30分間ランニングする"
+            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-pink-500">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1" for="habitFreq">頻度</label>
+          <select id="habitFreq" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-pink-500">
+            <option value="毎日">毎日</option>
+            <option value="週3回">週3回</option>
+            <option value="週4回">週4回</option>
+            <option value="週5回">週5回</option>
+            <option value="週6回">週6回</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1" for="habitPeriod">期間</label>
+          <input id="habitPeriod" type="text" placeholder="例: 2026年11月〜2027年1月（90日間）"
+            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-pink-500">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1" for="habitReward">達成報酬</label>
+          <input id="habitReward" type="text" placeholder="例: 新しいランニングシューズを購入する"
+            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-pink-500">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1" for="habitPenalty">失敗ペナルティ</label>
+          <input id="habitPenalty" type="text" placeholder="例: 1日サボるごとに500円を貯金箱に入れる"
+            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-pink-500">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1" for="habitWitness">証人名</label>
+          <input id="habitWitness" type="text" placeholder="例: 山田太郎（妻）"
+            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-pink-500">
+        </div>
+        <button id="saveHabitBtn" class="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 rounded-lg text-sm transition">保存</button>
+      </div>
+
+      <!-- Progress -->
+      <div id="progressSection" class="bg-gray-900 rounded-xl p-4 hidden">
+        <h2 class="text-sm font-semibold text-pink-400 mb-3">進捗追跡</h2>
+        <div id="progressInfo" class="text-sm text-gray-300 mb-3"></div>
+        <div class="flex gap-3">
+          <button id="checkTodayBtn" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition">今日達成した ✓</button>
+          <button id="deleteHabitBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm transition">習慣を削除</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contract Preview -->
+    <div>
+      <div class="print-contract bg-white text-gray-900 rounded-xl p-6 border-4 border-gray-800 font-serif" id="contractPreview">
+        <div class="text-center mb-4">
+          <div class="text-xs text-gray-500 tracking-widest mb-1">— 自己習慣契約書 —</div>
+          <div class="text-xl font-bold text-gray-900 border-b-2 border-gray-800 pb-2" id="previewName">習慣名</div>
+        </div>
+        <div class="text-sm space-y-3 text-gray-800">
+          <p>私は以下の習慣を誠実に実行することを、自分自身および証人に対して約束します。</p>
+          <div class="bg-gray-50 border border-gray-200 rounded p-3 space-y-2 text-xs">
+            <div><span class="font-bold">アクション:</span> <span id="previewAction">—</span></div>
+            <div><span class="font-bold">頻度:</span> <span id="previewFreq">—</span></div>
+            <div><span class="font-bold">期間:</span> <span id="previewPeriod">—</span></div>
+            <div><span class="font-bold">達成報酬:</span> <span id="previewReward">—</span></div>
+            <div><span class="font-bold">ペナルティ:</span> <span id="previewPenalty">—</span></div>
+          </div>
+          <p class="text-xs text-gray-500">この約束を守ることで、私は目標に近づき、より良い自分へと成長することを確約します。</p>
+        </div>
+        <div class="mt-6 grid grid-cols-2 gap-4 text-xs">
+          <div>
+            <div class="border-b border-gray-400 mb-1 pb-1 font-bold text-gray-700">署名</div>
+            <canvas id="signatureCanvas" width="180" height="60" class="border border-gray-300 rounded bg-white w-full" role="img" aria-label="署名欄"></canvas>
+            <button id="clearSigBtn" class="mt-1 text-xs text-gray-400 hover:text-gray-600 no-print">クリア</button>
+          </div>
+          <div>
+            <div class="border-b border-gray-400 mb-1 pb-1 font-bold text-gray-700">証人: <span id="previewWitness" class="font-normal">—</span></div>
+            <div class="text-gray-500 mt-1">日付: <span id="previewDate"></span></div>
+          </div>
+        </div>
+      </div>
+      <button id="printBtn" class="no-print mt-3 w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg text-sm font-medium transition">印刷する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  function htmlEscape(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  let habits = {};
+  let currentId = null;
+
+  function loadHabits() {
+    try { habits = JSON.parse(localStorage.getItem('habits_v1') || '{}'); } catch(e) { habits = {}; }
+  }
+  function saveHabits() { localStorage.setItem('habits_v1', JSON.stringify(habits)); }
+
+  function newHabit() {
+    return { name:'', action:'', freq:'毎日', period:'', reward:'', penalty:'', witness:'', signature:'', checkins:[], created: new Date().toISOString().slice(0,10) };
+  }
+
+  function populateSelect() {
+    const sel = document.getElementById('habitSelect');
+    sel.innerHTML = '<option value="__new__">＋ 新規習慣</option>';
+    Object.keys(habits).forEach(id => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = habits[id].name || `習慣 ${id.slice(-4)}`;
+      sel.appendChild(opt);
+    });
+    if (currentId) sel.value = currentId;
+  }
+
+  function loadToForm(id) {
+    const h = habits[id] || newHabit();
+    document.getElementById('habitName').value = h.name;
+    document.getElementById('habitAction').value = h.action;
+    document.getElementById('habitFreq').value = h.freq;
+    document.getElementById('habitPeriod').value = h.period;
+    document.getElementById('habitReward').value = h.reward;
+    document.getElementById('habitPenalty').value = h.penalty;
+    document.getElementById('habitWitness').value = h.witness;
+    updatePreview();
+    renderProgress(id);
+    if (h.signature) {
+      const img = new Image();
+      img.onload = () => {
+        const ctx = document.getElementById('signatureCanvas').getContext('2d');
+        ctx.clearRect(0,0,180,60);
+        ctx.drawImage(img,0,0);
+      };
+      img.src = h.signature;
+    }
+  }
+
+  function updatePreview() {
+    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '—'; };
+    setText('previewName', document.getElementById('habitName').value);
+    setText('previewAction', document.getElementById('habitAction').value);
+    setText('previewFreq', document.getElementById('habitFreq').value);
+    setText('previewPeriod', document.getElementById('habitPeriod').value);
+    setText('previewReward', document.getElementById('habitReward').value);
+    setText('previewPenalty', document.getElementById('habitPenalty').value);
+    setText('previewWitness', document.getElementById('habitWitness').value);
+    document.getElementById('previewDate').textContent = new Date().toLocaleDateString('ja-JP');
+  }
+
+  function renderProgress(id) {
+    const h = habits[id];
+    if (!h) { document.getElementById('progressSection').classList.add('hidden'); return; }
+    document.getElementById('progressSection').classList.remove('hidden');
+    const today = new Date().toISOString().slice(0,10);
+    const checkins = h.checkins || [];
+    const streak = calcStreak(checkins);
+    const checkedToday = checkins.includes(today);
+    const infoEl = document.getElementById('progressInfo');
+    infoEl.innerHTML = `
+      <div class="flex gap-4 text-sm">
+        <div class="text-center"><div class="text-2xl font-bold text-pink-400">${streak}</div><div class="text-xs text-gray-500">連続日数</div></div>
+        <div class="text-center"><div class="text-2xl font-bold text-gray-300">${checkins.length}</div><div class="text-xs text-gray-500">累計達成</div></div>
+        <div class="text-center"><div class="text-lg font-bold ${checkedToday ? 'text-green-400' : 'text-yellow-400'}">${checkedToday ? '✓ 達成' : '未達成'}</div><div class="text-xs text-gray-500">今日</div></div>
+      </div>
+    `;
+    const btn = document.getElementById('checkTodayBtn');
+    btn.textContent = checkedToday ? '今日の達成を取消' : '今日達成した ✓';
+    btn.className = `${checkedToday ? 'bg-gray-600 hover:bg-gray-500' : 'bg-green-600 hover:bg-green-500'} text-white px-4 py-2 rounded-lg text-sm font-medium transition`;
+  }
+
+  function calcStreak(checkins) {
+    if (!checkins.length) return 0;
+    const sorted = [...checkins].sort().reverse();
+    let streak = 0;
+    let d = new Date();
+    for (const ci of sorted) {
+      const expected = d.toISOString().slice(0,10);
+      if (ci === expected) { streak++; d.setDate(d.getDate()-1); }
+      else break;
+    }
+    return streak;
+  }
+
+  // Signature canvas
+  let drawing = false, lastX = 0, lastY = 0;
+  const sigCanvas = document.getElementById('signatureCanvas');
+  const sigCtx = sigCanvas.getContext('2d');
+  sigCtx.strokeStyle = '#1e293b';
+  sigCtx.lineWidth = 2;
+  sigCtx.lineCap = 'round';
+
+  function getPos(e) {
+    const rect = sigCanvas.getBoundingClientRect();
+    const scaleX = sigCanvas.width / rect.width;
+    const scaleY = sigCanvas.height / rect.height;
+    if (e.touches) {
+      return [(e.touches[0].clientX - rect.left) * scaleX, (e.touches[0].clientY - rect.top) * scaleY];
+    }
+    return [(e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY];
+  }
+  sigCanvas.addEventListener('mousedown', e => { drawing=true; [lastX,lastY]=getPos(e); });
+  sigCanvas.addEventListener('mousemove', e => {
+    if (!drawing) return;
+    const [x,y] = getPos(e);
+    sigCtx.beginPath(); sigCtx.moveTo(lastX,lastY); sigCtx.lineTo(x,y); sigCtx.stroke();
+    [lastX,lastY]=[x,y];
+  });
+  sigCanvas.addEventListener('mouseup', () => { drawing=false; saveSig(); });
+  sigCanvas.addEventListener('touchstart', e => { e.preventDefault(); drawing=true; [lastX,lastY]=getPos(e); }, {passive:false});
+  sigCanvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!drawing) return;
+    const [x,y]=getPos(e);
+    sigCtx.beginPath(); sigCtx.moveTo(lastX,lastY); sigCtx.lineTo(x,y); sigCtx.stroke();
+    [lastX,lastY]=[x,y];
+  }, {passive:false});
+  sigCanvas.addEventListener('touchend', () => { drawing=false; saveSig(); });
+
+  function saveSig() {
+    if (!currentId || !habits[currentId]) return;
+    habits[currentId].signature = sigCanvas.toDataURL();
+    saveHabits();
+  }
+
+  document.getElementById('clearSigBtn').addEventListener('click', () => {
+    sigCtx.clearRect(0,0,180,60);
+    if (currentId && habits[currentId]) { habits[currentId].signature = ''; saveHabits(); }
+  });
+
+  ['habitName','habitAction','habitFreq','habitPeriod','habitReward','habitPenalty','habitWitness'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updatePreview);
+  });
+
+  document.getElementById('saveHabitBtn').addEventListener('click', () => {
+    const name = document.getElementById('habitName').value.trim();
+    if (!name) { document.getElementById('habitName').focus(); return; }
+    if (!currentId || !habits[currentId]) {
+      currentId = 'h_' + Date.now();
+      habits[currentId] = newHabit();
+    }
+    const h = habits[currentId];
+    h.name = name;
+    h.action = document.getElementById('habitAction').value;
+    h.freq = document.getElementById('habitFreq').value;
+    h.period = document.getElementById('habitPeriod').value;
+    h.reward = document.getElementById('habitReward').value;
+    h.penalty = document.getElementById('habitPenalty').value;
+    h.witness = document.getElementById('habitWitness').value;
+    saveHabits();
+    populateSelect();
+    renderProgress(currentId);
+  });
+
+  document.getElementById('checkTodayBtn').addEventListener('click', () => {
+    if (!currentId || !habits[currentId]) return;
+    const today = new Date().toISOString().slice(0,10);
+    const idx = habits[currentId].checkins.indexOf(today);
+    if (idx >= 0) habits[currentId].checkins.splice(idx,1);
+    else habits[currentId].checkins.push(today);
+    saveHabits();
+    renderProgress(currentId);
+  });
+
+  document.getElementById('deleteHabitBtn').addEventListener('click', () => {
+    if (!currentId || !confirm('この習慣を削除しますか？')) return;
+    delete habits[currentId];
+    saveHabits();
+    currentId = null;
+    populateSelect();
+    document.getElementById('progressSection').classList.add('hidden');
+  });
+
+  document.getElementById('habitSelect').addEventListener('change', e => {
+    if (e.target.value === '__new__') { currentId = null; loadToForm(null); return; }
+    currentId = e.target.value;
+    loadToForm(currentId);
+  });
+
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+  loadHabits();
+  populateSelect();
+  const keys = Object.keys(habits);
+  if (keys.length) { currentId = keys[0]; document.getElementById('habitSelect').value = currentId; loadToForm(currentId); }
+  updatePreview();
+})();
+</script>
+</body>
+</html>
